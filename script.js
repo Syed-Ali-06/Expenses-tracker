@@ -37,7 +37,7 @@ function addTransaction() {
   document.getElementById("amount").value = "";
 }
 
-// Render transactions
+// Render transactions with date
 function renderTransactions() {
   const list = document.getElementById("transactions");
   list.innerHTML = "";
@@ -53,11 +53,14 @@ function setupCharts() {
   const lineCtx = document.getElementById("lineChart").getContext("2d");
   lineChart = new Chart(lineCtx, {
     type: "line",
-    data: { labels: [], datasets: [{ label: "Balance", data: [], borderColor: "blue", fill: false }] },
+    data: { labels: [], datasets: [{ label: "Total Balance", data: [], borderColor: "blue", fill: false }] },
     options: {
       responsive: true,
       scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 50 } }
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 50 }
+        }
       }
     }
   });
@@ -66,7 +69,22 @@ function setupCharts() {
   pieChart = new Chart(pieCtx, {
     type: "pie",
     data: { labels: ["Balance", "Expenses"], datasets: [{ data: [0, 0], backgroundColor: ["green", "red"] }] },
-    options: { responsive: true }
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const dataset = context.dataset;
+              const total = dataset.data.reduce((a,b)=>a+b,0);
+              const value = dataset.data[context.dataIndex];
+              const percent = total > 0 ? ((value/total)*100).toFixed(1) : 0;
+              return `${context.label}: £${value} (${percent}%)`;
+            }
+          }
+        }
+      }
+    }
   });
 
   const barCtx = document.getElementById("barChart").getContext("2d");
@@ -82,15 +100,14 @@ function updateCharts() {
   const totalIncome = transactions.filter(t => t.type === "in").reduce((a,b)=>a+b.amount,0);
   const totalExpenses = -transactions.filter(t => t.type === "out").reduce((a,b)=>a+b.amount,0);
 
-  // Line chart data based on startingBalance + cumulative transactions
+  // Line chart
   const lineData = [];
-  let runningBalance = startingBalance;
-  lineData.push(runningBalance);
-  for (const t of transactions) {
-    runningBalance += t.amount;
-    lineData.push(runningBalance);
-  }
-  lineChart.data.labels = lineData.map((_, i) => i);
+  let runningTotal = startingBalance;
+  lineChart.data.labels = transactions.map((t,i)=>i+1);
+  transactions.forEach(t => {
+    runningTotal += t.amount;
+    lineData.push(runningTotal);
+  });
   lineChart.data.datasets[0].data = lineData;
   lineChart.update();
 
@@ -111,7 +128,7 @@ function updateYStep(step) {
   lineChart.update();
 }
 
-// Update net change display
+// Update net change
 function updateNetChange() {
   const net = balance - startingBalance;
   document.getElementById("netChange").innerText = net.toFixed(2);
@@ -119,10 +136,9 @@ function updateNetChange() {
 
 // Settings functions
 function setStartingBalance() {
-  const startBalance = parseFloat(document.getElementById("startBalance").value);
-  if (!isNaN(startBalance)) {
-    startingBalance = startBalance;
-    // Recalculate balance including transactions
+  const start = parseFloat(document.getElementById("startBalance").value);
+  if (!isNaN(start)) {
+    startingBalance = start;
     balance = startingBalance + transactions.reduce((a,b)=>a+b.amount,0);
     document.getElementById("balance").innerText = balance.toFixed(2);
     updateNetChange();
@@ -154,7 +170,7 @@ function resetData() {
     balance = 0;
     transactions = [];
     automation = { amount: 0, day: null };
-    document.getElementById("balance").innerText = balance.toFixed(2);
+    document.getElementById("balance").innerText = "0";
     document.getElementById("netChange").innerText = "0";
     document.getElementById("startBalance").value = "";
     document.getElementById("autoAmount").value = "";
@@ -169,7 +185,7 @@ function resetData() {
 
 // Save everything to localStorage
 function saveData() {
-  const data = { startingBalance, balance, transactions, automation };
+  const data = { startingBalance, transactions, automation };
   localStorage.setItem("expenseTrackerData", JSON.stringify(data));
 }
 
@@ -182,13 +198,11 @@ function loadData() {
     transactions = data.transactions || [];
     automation = data.automation || { amount: 0, day: null };
     balance = startingBalance + transactions.reduce((a,b)=>a+b.amount,0);
-
     document.getElementById("balance").innerText = balance.toFixed(2);
-    document.getElementById("netChange").innerText = (balance - startingBalance).toFixed(2);
     document.getElementById("startBalance").value = startingBalance;
     document.getElementById("autoAmount").value = automation.amount;
     document.getElementById("autoDay").value = automation.day;
-
+    updateNetChange();
     renderTransactions();
     updateCharts();
   }
