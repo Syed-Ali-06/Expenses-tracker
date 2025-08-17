@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Dashboard</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+
+  <div class="container">
+    <h1>Settings</h1>
+
+    <h2>Automation</h2>
+    <label>Recurring Income (£):</label>
+    <input type="number" id="recurringAmount" placeholder="e.g. 2000">
+    <label>Day of Month:</label>
+    <input type="number" id="recurringDay" min="1" max="28">
+    <button onclick="saveAutomation()">Save</button>
+
+    <h2>Tax Calculator</h2>
+    <label>Annual Salary (£):</label>
+    <input type="number" id="salary">
+    <button onclick="calculateTax()">Calculate Tax</button>
+
+    <h3 id="taxResult"></h3>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="nav">
+    <button onclick="showPage('tracker')">Tracker</button>
+    <button onclick="showPage('settings')">Settings</button>
+  </div>
+
+  <!-- Tracker Page -->
+  <div id="tracker" class="page">
+    <h1>Expense Tracker</h1>
+    
+    <div class="form">
+      <input type="text" id="desc" placeholder="Description">
+      <input type="number" id="amount" placeholder="Amount">
+      <select id="type">
+        <option value="in">Income</option>
+        <option value="out">Expense</option>
+      </select>
+      <button onclick="addTransaction()">Add</button>
+    </div>
+
+    <h2>Bank Balance: £<span id="balance">0</span></h2>
+
+    <ul id="transactions"></ul>
+
+    <div class="charts-container" style="display: flex; gap: 20px;">
+      <!-- Left side: Line Chart + slider -->
+      <div style="flex: 1;">
+        <div style="margin-bottom: 10px;">
+          <label for="yStep">Line Chart Y-axis Step: </label>
+          <input type="range" id="yStep" min="1" max="1000" step="1" value="50" oninput="updateYStep(this.value)">
+          <span id="yStepValue">50</span>
+        </div>
+        <canvas id="lineChart" height="300"></canvas>
+      </div>
+
+      <!-- Right side: Pie Chart and Bar Chart -->
+      <div style="flex: 1;">
+        <canvas id="pieChart" height="300"></canvas>
+        <canvas id="barChart" height="300" style="margin-top: 20px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Page -->
+  <div id="settings" class="page hidden">
+    <h1>Settings</h1>
+
+    <h3>Set Starting Balance</h3>
+    <input type="number" id="startBalance" placeholder="Enter starting balance">
+    <button onclick="setStartingBalance()">Set</button>
+
+    <h3>Automate Monthly Income</h3>
+    <input type="number" id="autoAmount" placeholder="Amount">
+    <input type="number" id="autoDay" placeholder="Day of Month (1-28)">
+    <button onclick="setAutomation()">Save Automation</button>
+
+    <h3>Salary Tax Calculator</h3>
+    <input type="number" id="salary" placeholder="Annual Salary (£)">
+    <button onclick="calcTax()">Calculate Tax</button>
+    <p id="taxResult"></p>
+
+    <h3>Save / Reset Data</h3>
+    <button onclick="forceSave()">Save Settings</button>
+    <button onclick="resetData()">Reset All Data</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
