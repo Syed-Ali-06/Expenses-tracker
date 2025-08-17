@@ -27,6 +27,7 @@ function addTransaction() {
 
   balance += signedAmount;
   document.getElementById("balance").innerText = balance.toFixed(2);
+  updateNetChange();
 
   renderTransactions();
   updateCharts();
@@ -36,7 +37,7 @@ function addTransaction() {
   document.getElementById("amount").value = "";
 }
 
-// Render transactions with date
+// Render transactions
 function renderTransactions() {
   const list = document.getElementById("transactions");
   list.innerHTML = "";
@@ -81,13 +82,16 @@ function updateCharts() {
   const totalIncome = transactions.filter(t => t.type === "in").reduce((a,b)=>a+b.amount,0);
   const totalExpenses = -transactions.filter(t => t.type === "out").reduce((a,b)=>a+b.amount,0);
 
-  // Line chart: starting balance + cumulative transactions
-  let cumulative = startingBalance;
-  lineChart.data.labels = transactions.map((t,i)=>i+1);
-  lineChart.data.datasets[0].data = transactions.map(t=>{
-    cumulative += t.amount;
-    return cumulative;
-  });
+  // Line chart data based on startingBalance + cumulative transactions
+  const lineData = [];
+  let runningBalance = startingBalance;
+  lineData.push(runningBalance);
+  for (const t of transactions) {
+    runningBalance += t.amount;
+    lineData.push(runningBalance);
+  }
+  lineChart.data.labels = lineData.map((_, i) => i);
+  lineChart.data.datasets[0].data = lineData;
   lineChart.update();
 
   // Pie chart
@@ -107,13 +111,21 @@ function updateYStep(step) {
   lineChart.update();
 }
 
+// Update net change display
+function updateNetChange() {
+  const net = balance - startingBalance;
+  document.getElementById("netChange").innerText = net.toFixed(2);
+}
+
 // Settings functions
 function setStartingBalance() {
-  const start = parseFloat(document.getElementById("startBalance").value);
-  if (!isNaN(start)) {
-    startingBalance = start;
-    balance = start + transactions.reduce((a,b)=>a+b.amount,0);
+  const startBalance = parseFloat(document.getElementById("startBalance").value);
+  if (!isNaN(startBalance)) {
+    startingBalance = startBalance;
+    // Recalculate balance including transactions
+    balance = startingBalance + transactions.reduce((a,b)=>a+b.amount,0);
     document.getElementById("balance").innerText = balance.toFixed(2);
+    updateNetChange();
     updateCharts();
     saveData();
   }
@@ -143,6 +155,7 @@ function resetData() {
     transactions = [];
     automation = { amount: 0, day: null };
     document.getElementById("balance").innerText = balance.toFixed(2);
+    document.getElementById("netChange").innerText = "0";
     document.getElementById("startBalance").value = "";
     document.getElementById("autoAmount").value = "";
     document.getElementById("autoDay").value = "";
@@ -171,6 +184,7 @@ function loadData() {
     balance = startingBalance + transactions.reduce((a,b)=>a+b.amount,0);
 
     document.getElementById("balance").innerText = balance.toFixed(2);
+    document.getElementById("netChange").innerText = (balance - startingBalance).toFixed(2);
     document.getElementById("startBalance").value = startingBalance;
     document.getElementById("autoAmount").value = automation.amount;
     document.getElementById("autoDay").value = automation.day;
@@ -187,6 +201,7 @@ setInterval(() => {
     transactions.push({ desc: "Automated Income", amount: automation.amount, type: "in", date: new Date().toLocaleString() });
     balance += automation.amount;
     document.getElementById("balance").innerText = balance.toFixed(2);
+    updateNetChange();
     renderTransactions();
     updateCharts();
     saveData();
