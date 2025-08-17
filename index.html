@@ -6,6 +6,18 @@
   <title>Expense Tracker</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .charts-container {
+      display: flex;
+      gap: 20px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .chart-box {
+      flex: 1;
+      min-width: 250px;
+    }
+  </style>
 </head>
 <body>
   <div class="nav">
@@ -32,21 +44,21 @@
 
     <ul id="transactions"></ul>
 
-    <div class="charts-container" style="display: flex; gap: 20px;">
-      <!-- Left side: Line Chart + slider -->
-      <div style="flex: 1;">
-        <div style="margin-bottom: 10px;">
-          <label for="yStep">Line Chart Y-axis Step: </label>
-          <input type="range" id="yStep" min="1" max="1000" step="1" value="50" oninput="updateYStep(this.value)">
-          <span id="yStepValue">50</span>
-        </div>
+    <!-- All charts side by side -->
+    <div class="charts-container">
+      <div class="chart-box">
+        <label for="yStep">Line Chart Y-axis Step: </label>
+        <input type="range" id="yStep" min="1" max="1000" step="1" value="50" oninput="updateYStep(this.value)">
+        <span id="yStepValue">50</span>
         <canvas id="lineChart" height="300"></canvas>
       </div>
 
-      <!-- Right side: Pie Chart and Bar Chart -->
-      <div style="flex: 1;">
+      <div class="chart-box">
         <canvas id="pieChart" height="300"></canvas>
-        <canvas id="barChart" height="300" style="margin-top: 20px;"></canvas>
+      </div>
+
+      <div class="chart-box">
+        <canvas id="barChart" height="300"></canvas>
       </div>
     </div>
   </div>
