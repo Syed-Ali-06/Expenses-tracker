@@ -1,3 +1,4 @@
+let startingBalance = 0;
 let balance = 0;
 let transactions = [];
 let automation = { amount: 0, day: null };
@@ -55,10 +56,7 @@ function setupCharts() {
     options: {
       responsive: true,
       scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 50 }
-        }
+        y: { beginAtZero: true, ticks: { stepSize: 50 } }
       }
     }
   });
@@ -67,22 +65,7 @@ function setupCharts() {
   pieChart = new Chart(pieCtx, {
     type: "pie",
     data: { labels: ["Balance", "Expenses"], datasets: [{ data: [0, 0], backgroundColor: ["green", "red"] }] },
-    options: {
-      responsive: true,
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const dataset = context.dataset;
-              const total = dataset.data.reduce((a,b)=>a+b,0);
-              const value = dataset.data[context.dataIndex];
-              const percent = total > 0 ? ((value/total)*100).toFixed(1) : 0;
-              return `${context.label}: £${value} (${percent}%)`;
-            }
-          }
-        }
-      }
-    }
+    options: { responsive: true }
   });
 
   const barCtx = document.getElementById("barChart").getContext("2d");
@@ -98,9 +81,13 @@ function updateCharts() {
   const totalIncome = transactions.filter(t => t.type === "in").reduce((a,b)=>a+b.amount,0);
   const totalExpenses = -transactions.filter(t => t.type === "out").reduce((a,b)=>a+b.amount,0);
 
-  // Line chart
-  lineChart.data.labels.push(transactions.length);
-  lineChart.data.datasets[0].data.push(balance);
+  // Line chart: starting balance + cumulative transactions
+  let cumulative = startingBalance;
+  lineChart.data.labels = transactions.map((t,i)=>i+1);
+  lineChart.data.datasets[0].data = transactions.map(t=>{
+    cumulative += t.amount;
+    return cumulative;
+  });
   lineChart.update();
 
   // Pie chart
@@ -122,9 +109,10 @@ function updateYStep(step) {
 
 // Settings functions
 function setStartingBalance() {
-  const startBalance = parseFloat(document.getElementById("startBalance").value);
-  if (!isNaN(startBalance)) {
-    balance = startBalance;
+  const start = parseFloat(document.getElementById("startBalance").value);
+  if (!isNaN(start)) {
+    startingBalance = start;
+    balance = start + transactions.reduce((a,b)=>a+b.amount,0);
     document.getElementById("balance").innerText = balance.toFixed(2);
     updateCharts();
     saveData();
@@ -150,6 +138,7 @@ function forceSave() {
 // Reset all data
 function resetData() {
   if (confirm("Are you sure you want to reset all data?")) {
+    startingBalance = 0;
     balance = 0;
     transactions = [];
     automation = { amount: 0, day: null };
@@ -167,7 +156,7 @@ function resetData() {
 
 // Save everything to localStorage
 function saveData() {
-  const data = { balance, transactions, automation };
+  const data = { startingBalance, balance, transactions, automation };
   localStorage.setItem("expenseTrackerData", JSON.stringify(data));
 }
 
@@ -176,13 +165,16 @@ function loadData() {
   const saved = localStorage.getItem("expenseTrackerData");
   if (saved) {
     const data = JSON.parse(saved);
-    balance = data.balance;
+    startingBalance = data.startingBalance || 0;
     transactions = data.transactions || [];
     automation = data.automation || { amount: 0, day: null };
+    balance = startingBalance + transactions.reduce((a,b)=>a+b.amount,0);
+
     document.getElementById("balance").innerText = balance.toFixed(2);
-    document.getElementById("startBalance").value = balance;
+    document.getElementById("startBalance").value = startingBalance;
     document.getElementById("autoAmount").value = automation.amount;
     document.getElementById("autoDay").value = automation.day;
+
     renderTransactions();
     updateCharts();
   }
